@@ -257,14 +257,14 @@ for family in tqdm(file_name_arr):
 	# Create a zero filled base image
 	for i, file in enumerate(glob.glob(atri_dir+family+'*.png')):
 		# Read the image
-		read_image = misc.imread(file, flatten=True)
+		read_image = imread(file, flatten=True)
 		border_color = read_image[0,0]
 		read_image[read_image == border_color] = 0
 		read_image[read_image > 0] = 255
 		read_image = np.int8(read_image/255)
 
 		if i == 0:
-			mask = misc.imread(mask_dir+family+'_segmentation.png', flatten=True)
+			mask = imread(mask_dir+family+'_segmentation.png', flatten=True)
 			base_image = np.ones(read_image.shape, dtype=int) # Healthy Skin is 1
 			border_mask_color = mask[0,0]
 			base_image[mask == border_mask_color] = 0
@@ -297,4 +297,4 @@ for family in tqdm(file_name_arr):
 				base_image[base_image > 7] = 7
 		else:
 			print('ERROR: Invalid File Found!!!!')
-	misc.toimage(base_image, cmin=0, cmax=255).save(output_dir+family+'_semantic.png')
+	toimage(base_image, cmin=0, cmax=255).save(output_dir+family+'_semantic.png')
