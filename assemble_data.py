@@ -278,7 +278,7 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
 
     bytedata = bytescale(data, high=high, low=low, cmin=cmin, cmax=cmax)
     if ca == 2:
-        strdata = bytedata.tostring()
+        strdata = bytedata.tobytes()
         shape = (shape[1], shape[0])
     elif ca == 1:
         strdata = transpose(bytedata, (0, 2, 1)).tobytes()
