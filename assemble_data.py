@@ -28,11 +28,106 @@ atri_dir = 'attribute_resized/'
 mask_dir = 'segmentation_resized/'
 output_dir = 'semantic_map/'
 
+def fromimage(im, flatten=False, mode=None):
+    """
+    Return a copy of a PIL image as a numpy array.
+    This function is only available if Python Imaging Library (PIL) is installed.
+    Parameters
+    ----------
+    im : PIL image
+        Input image.
+    flatten : bool
+        If true, convert the output to grey-scale.
+    mode : str, optional
+        Mode to convert image to, e.g. ``'RGB'``.  See the Notes of the
+        `imread` docstring for more details.
+    Returns
+    -------
+    fromimage : ndarray
+        The different colour bands/channels are stored in the
+        third dimension, such that a grey-image is MxN, an
+        RGB-image MxNx3 and an RGBA-image MxNx4.
+    """
+    if not Image.isImageType(im):
+        raise TypeError("Input is not a PIL image.")
+
+    if mode is not None:
+        if mode != im.mode:
+            im = im.convert(mode)
+    elif im.mode == 'P':
+        # Mode 'P' means there is an indexed "palette".  If we leave the mode
+        # as 'P', then when we do `a = array(im)` below, `a` will be a 2-D
+        # containing the indices into the palette, and not a 3-D array
+        # containing the RGB or RGBA values.
+        if 'transparency' in im.info:
+            im = im.convert('RGBA')
+        else:
+            im = im.convert('RGB')
+
+    if flatten:
+        im = im.convert('F')
+    elif im.mode == '1':
+        # Workaround for crash in PIL. When im is 1-bit, the call array(im)
+        # can cause a seg. fault, or generate garbage. See
+        # https://github.com/scipy/scipy/issues/2138 and
+        # https://github.com/python-pillow/Pillow/issues/350.
+        #
+        # This converts im from a 1-bit image to an 8-bit image.
+        im = im.convert('L')
+
+    a = array(im)
+    return a
 
 
-@numpy.deprecate(message="`toimage` is deprecated in SciPy 1.0.0, "
-                         "and will be removed in 1.2.0.\n"
-            "Use Pillow's ``Image.fromarray`` directly instead.")
+
+def imread(name, flatten=False, mode=None):
+    """
+    Read an image from a file as an array.
+    This function is only available if Python Imaging Library (PIL) is installed.
+    Parameters
+    ----------
+    name : str or file object
+        The file name or file object to be read.
+    flatten : bool, optional
+        If True, flattens the color layers into a single gray-scale layer.
+    mode : str, optional
+        Mode to convert image to, e.g. ``'RGB'``.  See the Notes for more
+        details.
+    Returns
+    -------
+    imread : ndarray
+        The array obtained by reading the image.
+    Notes
+    -----
+    `imread` uses the Python Imaging Library (PIL) to read an image.
+    The following notes are from the PIL documentation.
+    `mode` can be one of the following strings:
+    * 'L' (8-bit pixels, black and white)
+    * 'P' (8-bit pixels, mapped to any other mode using a color palette)
+    * 'RGB' (3x8-bit pixels, true color)
+    * 'RGBA' (4x8-bit pixels, true color with transparency mask)
+    * 'CMYK' (4x8-bit pixels, color separation)
+    * 'YCbCr' (3x8-bit pixels, color video format)
+    * 'I' (32-bit signed integer pixels)
+    * 'F' (32-bit floating point pixels)
+    PIL also provides limited support for a few special modes, including
+    'LA' ('L' with alpha), 'RGBX' (true color with padding) and 'RGBa'
+    (true color with premultiplied alpha).
+    When translating a color image to black and white (mode 'L', 'I' or
+    'F'), the library uses the ITU-R 601-2 luma transform::
+        L = R * 299/1000 + G * 587/1000 + B * 114/1000
+    When `flatten` is True, the image is converted using mode 'F'.
+    When `mode` is not None and `flatten` is True, the image is first
+    converted according to `mode`, and the result is then flattened using
+    mode 'F'.
+    """
+
+    im = Image.open(name)
+    return fromimage(im, flatten=flatten, mode=mode)
+
+
+
+
 def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
             mode=None, channel_axis=None):
     """Takes a numpy array and returns a PIL image.
